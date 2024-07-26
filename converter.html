@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarih ve Saat Formatı Dönüştürücü</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #333; /* Koyu gri arka plan */
+            color: #fff; /* Beyaz yazı rengi */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .container {
+            display: flex;
+            flex: 1;
+            margin: 20px;
+        }
+         .left-panel, .center-panel, .right-panel {
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .left-panel {
+            background-color: #424242; /* Koyu gri konteyner */
+            margin-right: 20px;
+            width: 20%; /* %20 genişlik */
+        }
+        .center-panel {
+            background-color: #424242; /* Koyu gri konteyner */
+            margin-right: 20px;
+            flex: 1;
+            width: 60%; /* %60 genişlik */
+        }
+        .right-panel {
+            background-color: #424242; /* Koyu gri konteyner */
+            margin-left: 20px;
+            width: 20%; /* %20 genişlik */
+        }
+        h1, h2 {
+            color: #FFD700; /* Altın sarısı başlık rengi */
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            color: #fff;
+        }
+       textarea, select, button {
+          font-weight: bold;
+          width: 100%;
+          height: 80%;
+          padding: 8px;
+          margin: 5px 0;
+          border-radius: 4px;
+          border: 1px solid #555; /* Gri sınır rengi */
+          background-color: #000; /* Siyah arka plan */
+          color: #FFD700; /* Açık sarı yazı rengi */
+      }
+      label {
+          color: #FFD700; /* Açık sarı yazı rengi */
+      }
+      
+      /* Seçeneklerin ve butonların üzerine gelindiğinde */
+      textarea:focus, select:focus, button:hover {
+          border-color: #FFD700; /* Açık sarı sınır rengi */
+          background-color: #333; /* Daha koyu siyah arka plan */
+      }
+
+        button {
+            padding: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            background-color: #28a745; /* Yeşil buton rengi */
+            color: #000;
+            background-color: #FFD700;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #FFC107; /* Buton hover efekti */
+        }
+        .logs, .invalid-data {
+            margin-top: 20px;
+        }
+        .log-item, .invalid-item {
+            margin-bottom: 5px;
+            font-size: 12px;
+            
+        }
+        .invalid-item {
+            color: #f00; /* Kırmızı geçersiz veri rengi */
+        }
+        .logs{
+           color: #948a04;
+        }
+        .result {
+            margin-top: 20px;
+            color: #28a745;
+        }
+        .hidden {
+            display: none;
+        }
+        .status-icon {
+            font-size: 16px;
+            margin-right: 5px;
+        }
+        .status-icon.success {
+            color: #28a745; /* Yeşil tik rengi */
+        }
+        .status-icon.error {
+            color: #f00; /* Kırmızı çarpı rengi */
+        }
+        .card {
+            background-color: #424242; /* Koyu gri kart arka plan */
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 15px 30px;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: bold;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.toast.show {
+    opacity: 1;
+}
+
+.toast.success {
+    background-color: #b18900; /* Altın sarısı */
+    color:#000;
+    font-weight: bold;
+}
+
+.toast.error {
+    background-color: #f00; /* Kırmızı */
+    font-weight: bold;
+}
+
+.toast .message {
+    color: #000; /* Siyah yazı rengi */
+}
+    </style>
+</head>
+<body>
+     <div class="container">
+       <div id="toast" class="toast hidden"></div>
+        <div class="left-panel">
+          <div class="card">
+              <h2><span class="status-icon error">📝</span> Kayıtlar 
+              <div class="logs " id="logs">
+              
+            </div>
+            </div>
+         
+            
+        </div>
+        <div class="center-panel">
+            <div class="card">
+                <h1>Tarih ve Saat Formatı Dönüştürücü</h1>
+                <label for="dataInput">Tarih ve Saat Verilerini Girin:</label>
+                <textarea id="dataInput" rows="10" placeholder="Verileri buraya yapıştırın..."></textarea>
+
+                <label for="formatType">Format Seçeneği:</label>
+                <select id="formatType" onchange="updateOptions()">
+                    <option value="">Seçin</option>
+                    <option value="date">Sadece Tarih</option>
+                    <option value="time">Sadece Saat</option>
+                    <option value="dateTime">Tarih ve Saat</option>
+                </select>
+
+                <div id="dateOptions" class="hidden">
+                    <label for="dateFormat">Tarih Formatı:</label>
+                    <select id="dateFormat">
+                        <option value="dd/MM/yyyy">gg/aa/yyyy (01/12/2023)</option>
+                        <option value="dd.MM.yyyy">gg.aa.yyyy (01.12.2023)</option>
+                        <option value="dd MMM yyyy">gg AAA yyyy (01 Ara 2023)</option>
+                        <option value="dd MMMM yyyy">gg AAAA yyyy (01 Aralık 2023)</option>
+                        <option value="dddd, dd MMMM yyyy">gggg, gg AAAA yyyy (Cumartesi, 01 Aralık 2023)</option>
+                    </select>
+                    
+                    <label for="dateCrop">Tarih Kırpma:</label>
+                    <select id="dateCrop">
+                        <option value="none">Yok</option>
+                        <option value="dateOnly">Sadece Günler</option>
+                        <option value="monthYear">Ay ve Yıl</option>
+                        <option value="yearOnly">Yıl Sadece</option>
+                    </select>
+                </div>
+
+                <div id="timeOptions" class="hidden">
+                    <label for="timeFormat">Saat Formatı:</label>
+                    <select id="timeFormat">
+                        <option value="HH:mm:ss">24 Saatlik (14:30:00)</option>
+                        <option value="hh:mm:ss a">12 Saatlik Yabancı Versiyon (02:30:00 PM)</option>
+                        <option value="HH:mm">Saat ve Dakika (14:30)</option>
+                        <option value="hh:mm a">Saat ve Dakika Yabancı Versiyon (02:30 PM)</option>
+                    </select>
+                    
+                    <label for="timeCrop">Saat Kırpma:</label>
+                    <select id="timeCrop">
+                        <option value="none">Yok</option>
+                        <option value="timeOnly">Saat Dakika Saniye</option>
+                        <option value="hoursOnly">Saatler Sadece</option>
+                    </select>
+                </div>
+                
+                <button onclick="convert()">Dönüştür</button>
+                <button onclick="copyResult()">Verileri Kopyala</button>
+            </div>
+        </div>
+        <div class="right-panel">
+            <div class="card invalid-data " id="invalidData">
+              <h2><span class="status-icon error">✘</span> Geçersiz Veriler
+             
+            </div>
+            <div class="card result">
+                <h2><span class="status-icon success">✔</span> Dönüştürülmüş Veriler</h2>
+                <pre id="resultData"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    
+    function showToast(message, type) {
+    const toastElement = document.getElementById('toast');
+    toastElement.textContent = message;
+    toastElement.className = `toast ${type} show`;
+    
+    setTimeout(() => {
+        toastElement.classList.remove('show');
+    }, 3000); // 3 saniye sonra toast kaybolur
+}
+
+        function updateOptions() {
+            const formatType = document.getElementById('formatType').value;
+            const dateOptions = document.getElementById('dateOptions');
+            const timeOptions = document.getElementById('timeOptions');
+            
+            if (formatType === 'date') {
+                dateOptions.classList.remove('hidden');
+                timeOptions.classList.add('hidden');
+            } else if (formatType === 'time') {
+                dateOptions.classList.add('hidden');
+                timeOptions.classList.remove('hidden');
+            } else if (formatType === 'dateTime') {
+                dateOptions.classList.remove('hidden');
+                timeOptions.classList.remove('hidden');
+            } else {
+                dateOptions.classList.add('hidden');
+                timeOptions.classList.add('hidden');
+            }
+        }
+        
+        function isValidDate(dateStr) {
+            const [day, month, year] = dateStr.split(/[./-]/).map(Number);
+            return !isNaN(day) && !isNaN(month) && !isNaN(year) &&
+                day > 0 && day <= 31 && month > 0 && month <= 12 && year > 1900;
+        }
+
+        function isValidTime(timeStr) {
+            const [hours, minutes, seconds] = timeStr.split(':').map(Number);
+            return !isNaN(hours) && !isNaN(minutes) && !isNaN(seconds) &&
+                hours >= 0 && hours < 24 && minutes >= 0 && minutes < 60 && seconds >= 0 && seconds < 60;
+        }
+
+        function formatDate(dateStr, format, crop) {
+            const [day, month, year] = dateStr.split(/[./-]/).map(Number);
+            let formattedDate;
+            switch(format) {
+                case 'dd/MM/yyyy':
+                    formattedDate = `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${year}`;
+                    break;
+                case 'dd.MM.yyyy':
+                    formattedDate = `${day.toString().padStart(2, '0')}.${month.toString().padStart(2, '0')}.${year}`;
+                    break;
+                case 'dd MMM yyyy':
+                    formattedDate = `${day} ${getMonthName(month)} ${year}`;
+                    break;
+                case 'dd MMMM yyyy':
+                    formattedDate = `${day} ${getMonthFullName(month)} ${year}`;
+                    break;
+                case 'dddd, dd MMMM yyyy':
+                    formattedDate = `${getDayName(day, month, year)}, ${day} ${getMonthFullName(month)} ${year}`;
+                    break;
+                default:
+                    formattedDate = dateStr;
+            }
+            if (crop === 'dateOnly') {
+                formattedDate = `${day.toString().padStart(2, '0')}`;
+            } else if (crop === 'monthYear') {
+                formattedDate = `${getMonthFullName(month)} ${year}`;
+            } else if (crop === 'yearOnly') {
+                formattedDate = `${year}`;
+            }
+            return formattedDate;
+        }
+
+        function formatTime(timeStr, format, crop) {
+            const [hours, minutes, seconds] = timeStr.split(':').map(Number);
+            let formattedTime;
+            if (format === 'HH:mm:ss') {
+                formattedTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            } else if (format === 'hh:mm:ss a') {
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                const adjustedHours = hours % 12 || 12;
+                formattedTime = `${adjustedHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} ${ampm}`;
+            } else if (format === 'HH:mm') {
+                formattedTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+            } else {
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                const adjustedHours = hours % 12 || 12;
+                formattedTime = `${adjustedHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+            }
+            if (crop === 'timeOnly') {
+                formattedTime = formattedTime.split(' ')[0];
+            } else if (crop === 'hoursOnly') {
+                formattedTime = `${hours.toString().padStart(2, '0')}`;
+            }
+            return formattedTime;
+        }
+
+        function getMonthName(month) {
+            const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+            return months[month - 1];
+        }
+
+        function getMonthFullName(month) {
+            const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+            return months[month - 1];
+        }
+
+        function getDayName(day, month, year) {
+            const date = new Date(year, month - 1, day);
+            const days = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+            return days[date.getDay()];
+        }
+
+        function log(message) {
+            const logElement = document.getElementById('logs');
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-item';
+            logEntry.textContent = message;
+            logElement.appendChild(logEntry);
+        }
+
+        function displayInvalidData(lines) {
+            const invalidDataElement = document.getElementById('invalidData');
+            invalidDataElement.innerHTML = '<h2><span class="status-icon error">✘</span> Geçersiz Veriler</h2>';
+            lines.forEach(line => {
+                const invalidEntry = document.createElement('div');
+                invalidEntry.className = 'invalid-item';
+                invalidEntry.textContent = line;
+                invalidDataElement.appendChild(invalidEntry);
+            });
+           invalidDataElement.classList.remove('hidden');
+        }
+
+        function convert() {
+            const dataInput = document.getElementById('dataInput').value.trim();
+            const dateFormat = document.getElementById('dateFormat').value;
+            const timeFormat = document.getElementById('timeFormat').value;
+            const dateCrop = document.getElementById('dateCrop').value;
+            const timeCrop = document.getElementById('timeCrop').value;
+            const formatType = document.getElementById('formatType').value;
+            
+            const lines = dataInput.split('\n').filter(line => line.trim() !== '');
+            let result = '';
+            let invalidLines = [];
+            const logElement = document.getElementById('logs');
+            logElement.innerHTML = ''; 
+            lines.forEach(line => {
+                const [dateStr, timeStr] = line.split(' ');
+                if (dateStr) {
+                    if (isValidDate(dateStr)) {
+                        let formattedDate = formatDate(dateStr, dateFormat, dateCrop);
+                        if (formatType === 'dateTime' && timeStr) {
+                            if (isValidTime(timeStr)) {
+                                const formattedTime = formatTime(timeStr, timeFormat, timeCrop);
+                                result +=`${formattedDate} ${formattedTime}\n`; 
+                                log(`Tarih ve Saat Dönüştürüldü: ${formattedDate} ${formattedTime}`);
+                            } else {
+                                result += `${formattedDate} ${timeStr}\n`;  // Geçersiz zaman, orijinal zamanı koru
+                                log(`Geçersiz veri, dönüştürülmedi: ${formattedDate} ${timeStr}`);
+                                invalidLines.push(line);
+                            }
+                        } else if (formatType === 'date') {
+                            result +=`${formattedDate}\n`; 
+                            log(`Tarih Dönüştürüldü: ${formattedDate}`);
+                        } else if (formatType === 'time' && timeStr) {
+                            if (isValidTime(timeStr)) {
+                                const formattedTime = formatTime(timeStr, timeFormat, timeCrop);
+                                result +=`${formattedTime}\n`; 
+                                log(`Saat Dönüştürüldü: ${formattedTime}`);
+                            } else {
+                                result +=`${dateStr} ${timeStr}\n`;  // Geçersiz zaman, orijinal tarihi koru
+                                 log(`Geçersiz veri, dönüştürülmedi: ${dateStr} ${timeStr}`);
+                                invalidLines.push(line);
+                            }
+                        } else {
+                            result +=`${dateStr} ${timeStr}\n`;  // Geçersiz format türü
+                             log(`Geçersiz veri, dönüştürülmedi: ${dateStr} ${timeStr}`);
+                            invalidLines.push(line);
+                        }
+                    } else {
+                        result +=`${dateStr} ${timeStr}\n `;  // Geçersiz tarih
+                         log(`Geçersiz veri, dönüştürülmedi: ${dateStr} ${timeStr}`);
+                        invalidLines.push(line);
+                    }
+                } else {
+                    invalidLines.push(line);
+                     log(`Geçersiz veri, dönüştürülmedi:`);
+                }
+            });
+            
+            document.getElementById('resultData').textContent = result;
+            displayInvalidData(invalidLines);
+            document.getElementById('logs').classList.remove('hidden');
+            showToast('Dönüştürülme İşlemi Yapıldı.', 'success');
+        }
+
+        function copyResult() {
+            const resultText = document.getElementById('resultData').textContent;
+            const textArea = document.createElement('textarea');
+            textArea.value = resultText;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                 showToast('Başarıyla kopyalandı!', 'success');
+            } catch (err) {
+               showToast('Kopyalama işlemi başarısız oldu: ' + err, 'error');
+            }
+            document.body.removeChild(textArea);
+        }
+    </script>
+</body>
+</html>
